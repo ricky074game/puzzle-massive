@@ -1,29 +1,20 @@
 # Puzzle Massive
 
+**I am no longer maintaining version 2 of Puzzle Massive.**
+
+Further development of Puzzle Massive version 3 is at
+<https://massive.xyz/puzzle>. There are no plans of keeping the version
+3 codebase backwards compatible with version 2.
+
+---
+
+## Version 2 (Unmaintained)
+
 A Massively Multiplayer Online Jigsaw Puzzle as a web application. Jigsaw
 puzzles are made from randomly generated classic interlocking pieces and can be
 5000+ pieces. Players can collaborate on the same jigsaw puzzle in real time.
 Other player's piece movements are moderated automatically in order to prevent
 abusive behavior.
-
-## Version 3 _the rewrite_
-
-Further development of Puzzle Massive version 3 is at
-<https://git.sr.ht/~jkenlooper/puzzle-massive>. There are no plans of keeping
-the version 3 codebase backwards compatible with version 2. Version 3 may be
-reusing code from version 2 but will have a clean git history.
-
-## Version 2
-
-While this version _does work_ and doesn't have too many issues, I am no longer
-going to actively run a website that is using the version 2 codebase.
-
-Issues for version 2 can be tracked via the projects source code repository
-<https://github.com/jkenlooper/puzzle-massive/issues>.
-
----
-
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 [![code style: prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 [![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
@@ -51,22 +42,6 @@ vagrant provision --provision-with shell-testdata-puzzles-quick
 - [Infrastructure as Code](_infra/README.md) documents how the project uses
   [DigitalOcean](https://m.do.co/c/686c08019031) and [Terraform](https://www.terraform.io/)
   for deploying to Development, Test, Acceptance, and Production environments.
-
-## Getting Help
-
-Ask questions on:
-
-- [Puzzle Massive Discussions](https://github.com/jkenlooper/puzzle-massive/discussions)
-- [Chat on Discord](https://discord.gg/uVhE2Kd)
-
-I try to monitor the Puzzle Massive chat channel on
-[Discord](https://discord.gg/uVhE2Kd)
-. This project is slightly complex with
-a few moving pieces (pun intended); that being said, there is a good chance that
-a piece or two are missing when putting the project together. If you have ran
-into a problem getting this project working on your own machine; please ask for
-help. I'm looking to improve the process where I can and am looking for more
-experience helping others in web development stuff like this.
 
 ## Change Log and History
 
