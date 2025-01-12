@@ -2,8 +2,9 @@ from builtins import str
 from random import randint
 import datetime
 
-from flask import current_app, abort, json, redirect, make_response, request
+from flask import current_app, abort, jsonify, redirect, make_response, request
 from flask.views import MethodView
+import json
 
 from api.app import db
 from api.database import rowify, fetch_query_string
@@ -50,7 +51,7 @@ class ChooseBitView(MethodView):
         (result, col_names) = rowify(result, cur.description)
         bits = [x["icon"] for x in result]
 
-        response = make_response(json.jsonify({"data": bits}), 200)
+        response = make_response(jsonify({"data": bits}), 200)
         if save_cookie:
             current_app.secure_cookie.set(
                 "ot", str(offset_seconds), response, expires_days=1
@@ -75,7 +76,7 @@ class ClaimBitView(MethodView):
         if not icon:
             data["message"] = "No icon param passed"
             data["name"] = "error"
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         # Prevent creating a new user if no support for cookies. Player should
         # have 'ot' already set by viewing the page.
@@ -83,7 +84,7 @@ class ClaimBitView(MethodView):
         if not uses_cookies:
             data["message"] = "No ot cookie present"
             data["name"] = "error"
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         cur = db.cursor()
 
@@ -96,7 +97,7 @@ class ClaimBitView(MethodView):
             db.commit()
             data["message"] = "That bit icon is no longer available."
             data["name"] = "error"
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         user = current_app.secure_cookie.get("user")
         if not user:
@@ -106,7 +107,7 @@ class ClaimBitView(MethodView):
                 data["name"] = "error"
                 cur.close()
                 db.commit()
-                return make_response(json.jsonify(data), 400)
+                return make_response(jsonify(data), 400)
             user = int(user)
 
         else:
@@ -116,7 +117,7 @@ class ClaimBitView(MethodView):
             current_app.config["POINT_COST_FOR_CHANGING_BIT"]
         )
         data["name"] = "success"
-        response = make_response(json.jsonify(data), 200)
+        response = make_response(jsonify(data), 200)
 
         # Unclaim any bit icon that the player already has
         cur.execute(fetch_query_string("unclaim_bit_icon.sql"), {"user": user})

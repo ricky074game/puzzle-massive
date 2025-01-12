@@ -1,7 +1,8 @@
 import math
 
-from flask import current_app, request, abort, json, make_response
+from flask import current_app, request, abort, jsonify, make_response
 from flask.views import MethodView
+import json
 
 from api.app import db
 from api.user import user_id_from_ip, user_not_banned
@@ -83,7 +84,7 @@ class InternalPuzzleRenderedResourcesListView(MethodView):
 
         cur.close()
 
-        return make_response(json.jsonify(response), 200)
+        return make_response(jsonify(response), 200)
 
 
 
@@ -126,7 +127,7 @@ class PlayerPuzzleListView(MethodView):
 
         cur.close()
 
-        return make_response(json.jsonify(response), 200)
+        return make_response(jsonify(response), 200)
 
 
 class GalleryPuzzleListView(MethodView):
@@ -168,4 +169,4 @@ class GalleryPuzzleListView(MethodView):
 
         cur.close()
 
-        return make_response(json.jsonify(response), 200)
+        return make_response(jsonify(response), 200)

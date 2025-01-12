@@ -4,8 +4,9 @@ import os
 import sqlite3
 import time
 
-from flask import current_app, make_response, request, abort, json
+from flask import current_app, make_response, request, abort, jsonify
 from flask.views import MethodView
+import json
 
 from api.app import redis_connection, db
 from api.database import rowify, fetch_query_string
@@ -106,13 +107,13 @@ class InternalPuzzleTimelineView(MethodView):
         data = request.get_json(silent=True)
         if not data:
             err_msg = {"msg": "No JSON data sent", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
         if not {"player", "message", "points", "timestamp"}.issuperset(data.keys()):
             err_msg = {"msg": "Extra fields in JSON data were sent", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
         if not data.get("player"):
             err_msg = {"msg": "Player is required in JSON data", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         response_msg = add_to_timeline(
             puzzle_id,
@@ -121,7 +122,7 @@ class InternalPuzzleTimelineView(MethodView):
             message=data.get("message", ""),
             timestamp=data.get("timestamp"),
         )
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])
 
     def delete(self, puzzle_id):
         "Delete all timeline records for a puzzle from the database."
@@ -131,7 +132,7 @@ class InternalPuzzleTimelineView(MethodView):
                 "msg": "No JSON payload should be sent with DELETE",
                 "status_code": 400,
             }
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         response_msg = delete_puzzle_timeline(puzzle_id)
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])

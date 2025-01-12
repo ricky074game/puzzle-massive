@@ -1,6 +1,7 @@
-from flask import current_app, request, abort, json, make_response
+from flask import current_app, request, abort, jsonify, make_response
 from flask.views import MethodView
 from flask_sse import sse
+import json
 
 from api.app import db, redis_connection
 from api.user import user_id_from_ip, user_not_banned
@@ -108,7 +109,7 @@ class PuzzleInstanceDetailsView(MethodView):
                 "msg": "No puzzle found",
             }
             cur.close()
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         (result, col_names) = rowify(result, cur.description)
         puzzleData = result[0]
 
@@ -149,7 +150,7 @@ class PuzzleInstanceDetailsView(MethodView):
             if not can_delete:
                 response = {"msg": delete_disabled_message}
                 cur.close()
-                return make_response(json.jsonify(response), 400)
+                return make_response(jsonify(response), 400)
 
             if delete_penalty > 0:
                 cur.execute(
@@ -238,7 +239,7 @@ class PuzzleInstanceDetailsView(MethodView):
 
                 response = {"msg": "Only unlisted puzzle instances can be reset"}
                 cur.close()
-                return make_response(json.jsonify(response), 400)
+                return make_response(jsonify(response), 400)
 
             if puzzleData.get("status") not in (
                 ACTIVE,
@@ -250,7 +251,7 @@ class PuzzleInstanceDetailsView(MethodView):
                     "msg": "Puzzle is not in acceptable state in order to be reset"
                 }
                 cur.close()
-                return make_response(json.jsonify(response), 400)
+                return make_response(jsonify(response), 400)
 
             if puzzleData.get("status") != ACTIVE:
                 # Only update the response status if puzzle status is changing.
@@ -270,7 +271,7 @@ class PuzzleInstanceDetailsView(MethodView):
             "/chill/site/front/{puzzle_id}/".format(puzzle_id=puzzle_id),
             current_app.config.get("PURGEURLLIST"),
         )
-        return make_response(json.jsonify(response), 202)
+        return make_response(jsonify(response), 202)
 
     def get(self, puzzle_id):
         """
@@ -299,7 +300,7 @@ class PuzzleInstanceDetailsView(MethodView):
                 "msg": "No puzzle found",
             }
             cur.close()
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         (result, col_names) = rowify(result, cur.description)
         puzzleData = result[0]
 
@@ -329,7 +330,7 @@ class PuzzleInstanceDetailsView(MethodView):
             "status": puzzleData.get("status", -99),
         }
         cur.close()
-        return make_response(json.jsonify(response), 200)
+        return make_response(jsonify(response), 200)
 
 
 class PuzzleOriginalDetailsView(MethodView):
@@ -407,7 +408,7 @@ class PuzzleOriginalDetailsView(MethodView):
                 "msg": "No puzzle found",
             }
             cur.close()
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         (result, col_names) = rowify(result, cur.description)
         puzzleData = result[0]
 
@@ -433,7 +434,7 @@ class PuzzleOriginalDetailsView(MethodView):
             ).fetchone()
             if not player_points_result:
                 cur.close()
-                return make_response(json.jsonify({}), 400)
+                return make_response(jsonify({}), 400)
 
             # bump any puzzle that is currently at QUEUE_WINNING_BID to be QUEUE_BUMPED_BID
             cur.execute(
@@ -454,7 +455,7 @@ class PuzzleOriginalDetailsView(MethodView):
 
         else:
             cur.close()
-            return make_response(json.jsonify({}), 400)
+            return make_response(jsonify({}), 400)
 
         cur.close()
 
@@ -462,7 +463,7 @@ class PuzzleOriginalDetailsView(MethodView):
             "/chill/site/front/{puzzle_id}/".format(puzzle_id=puzzle_id),
             current_app.config.get("PURGEURLLIST"),
         )
-        return make_response(json.jsonify(response), 202)
+        return make_response(jsonify(response), 202)
 
     def get(self, puzzle_id):
         """
@@ -488,7 +489,7 @@ class PuzzleOriginalDetailsView(MethodView):
                 "msg": "No puzzle found",
             }
             cur.close()
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         (result, col_names) = rowify(result, cur.description)
         puzzleData = result[0]
 
@@ -503,7 +504,7 @@ class PuzzleOriginalDetailsView(MethodView):
             "status": puzzleData.get("status", -99),
         }
         cur.close()
-        return make_response(json.jsonify(response), 200)
+        return make_response(jsonify(response), 200)
 
 
 class InternalPuzzleDetailsView(MethodView):
@@ -512,9 +513,9 @@ class InternalPuzzleDetailsView(MethodView):
     def get(self, puzzle_id):
         result = get_puzzle_details(puzzle_id)
         if result["status_code"] >= 400:
-            return make_response(json.jsonify(result), result["status_code"])
+            return make_response(jsonify(result), result["status_code"])
 
-        return make_response(json.jsonify(result["result"]), result["status_code"])
+        return make_response(jsonify(result["result"]), result["status_code"])
 
     def patch(self, puzzle_id):
         data = request.get_json(silent=True)
@@ -529,7 +530,7 @@ class InternalPuzzleDetailsView(MethodView):
                 "/chill/site/front/{puzzle_id}/".format(puzzle_id=puzzle_id),
                 current_app.config.get("PURGEURLLIST"),
             )
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])
 
 
 class InternalPuzzleDetailsByIdView(MethodView):
@@ -538,9 +539,9 @@ class InternalPuzzleDetailsByIdView(MethodView):
     def get(self, pz_id):
         result = get_puzzle_details_by_id(pz_id)
         if result["status_code"] >= 400:
-            return make_response(json.jsonify(result), result["status_code"])
+            return make_response(jsonify(result), result["status_code"])
 
-        return make_response(json.jsonify(result["result"]), result["status_code"])
+        return make_response(jsonify(result["result"]), result["status_code"])
 
 
 def get_puzzle_details(puzzle_id):

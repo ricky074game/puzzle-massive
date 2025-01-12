@@ -1,8 +1,9 @@
 import sqlite3
 
-from flask import current_app, make_response, request, abort, json
+from flask import current_app, make_response, request, abort, jsonify
 from flask.views import MethodView
 import requests
+import json
 
 from api.app import db
 from api.database import rowify, fetch_query_string
@@ -210,4 +211,4 @@ class InternalTasksStartView(MethodView):
                 "msg": "Task does not exist",
                 "status_code": 404,
             }
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])

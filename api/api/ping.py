@@ -2,9 +2,10 @@
 import time
 import uuid
 
-from flask import current_app, make_response, request, json
+from flask import current_app, make_response, request, jsonify
 from flask.views import MethodView
 from flask_sse import sse
+import json
 
 from api.app import db, redis_connection
 from api.user import user_not_banned, user_id_from_ip
@@ -56,7 +57,7 @@ class PingPuzzleView(MethodView):
         if user is None:
             response["message"] = "Player not currently logged in."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         user = int(user)
 
@@ -71,7 +72,7 @@ class PingPuzzleView(MethodView):
             response["message"] = "Puzzle not available"
             response["name"] = "invalid"
             cur.close()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         else:
             (result, col_names) = rowify(result, cur.description)
             puzzle = result[0].get("id")
@@ -97,7 +98,7 @@ class PingPuzzleView(MethodView):
                     type="invalid",
                     channel="puzzle:{puzzle_id}".format(puzzle_id=puzzle_id),
                 )
-                return make_response(json.jsonify(response), 200)
+                return make_response(jsonify(response), 200)
 
         cur.close()
         # publish to the puzzle channel the ping with the user id.  This will
@@ -114,7 +115,7 @@ class PingPuzzleView(MethodView):
         )
         response["message"] = "ping accepted"
         response["name"] = "accepted"
-        response = make_response(json.jsonify(response), 202)
+        response = make_response(jsonify(response), 202)
         return response
 
     def patch(self, puzzle_id):
@@ -132,7 +133,7 @@ class PingPuzzleView(MethodView):
         if token is None:
             response["message"] = "No token"
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         user = current_app.secure_cookie.get("user") or user_id_from_ip(
             request.headers.get("X-Real-IP"),
@@ -143,7 +144,7 @@ class PingPuzzleView(MethodView):
         if user is None:
             response["message"] = "Player not currently logged in."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         user = int(user)
 
@@ -158,7 +159,7 @@ class PingPuzzleView(MethodView):
             response["message"] = "Puzzle not available"
             response["name"] = "invalid"
             cur.close()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         else:
             (result, col_names) = rowify(result, cur.description)
             puzzle = result[0].get("id")
@@ -184,7 +185,7 @@ class PingPuzzleView(MethodView):
                     type="invalid",
                     channel="puzzle:{puzzle_id}".format(puzzle_id=puzzle_id),
                 )
-                return make_response(json.jsonify(response), 200)
+                return make_response(jsonify(response), 200)
 
         cur.close()
         # Determine latency for the player and record timestamp in sorted set.
@@ -195,7 +196,7 @@ class PingPuzzleView(MethodView):
         if not ping_start:
             response["message"] = "Ignoring error when determining latency."
             response["name"] = "ignored"
-            return make_response(json.jsonify(response), 200)
+            return make_response(jsonify(response), 200)
         ping_start = int(ping_start)
         ping_key = get_ping_key(puzzle)
         redis_connection.zadd(ping_key, {user: ping_end})
@@ -216,5 +217,5 @@ class PingPuzzleView(MethodView):
         response["message"] = "Latency"
         response["data"]["latency"] = latency
         response["name"] = "success"
-        response = make_response(json.jsonify(response), 200)
+        response = make_response(jsonify(response), 200)
         return response

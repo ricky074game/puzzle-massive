@@ -58,11 +58,7 @@ def make_app(config=None, database_writable=False, **kw):
     app.secure_cookie = SecureCookie(app, cookie_secret=kw["cookie_secret"])
 
     app.queries = files_loader("queries")
-    queue = Queue()
-    app.cleanupqueue = queue("puzzle_cleanup", connection=redis_connection)
-    app.createqueue = queue("puzzle_create", connection=redis_connection)
-    app.unsplashqueue = queue("unsplash_image_fetch", connection=redis_connection)
-
+    
     @app.teardown_appcontext
     def teardown_db(exception):
         db = getattr(g, "_database", None)

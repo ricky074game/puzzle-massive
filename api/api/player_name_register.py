@@ -1,7 +1,8 @@
 "Player Name Register"
 
-from flask import current_app, redirect, request, make_response, abort, json
+from flask import current_app, redirect, request, make_response, abort, jsonify
 from flask.views import MethodView
+import json
 
 from api.app import db
 from api.database import rowify, fetch_query_string
@@ -85,7 +86,7 @@ class PlayerNameRegisterView(MethodView):
         if user == None:
             response["message"] = "User not signed in."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         user = int(user)
 
         args = {}
@@ -102,7 +103,7 @@ class PlayerNameRegisterView(MethodView):
         if len(display_name) > USER_NAME_MAXLENGTH:
             response["message"] = "Submitted name is too long."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         cur = db.cursor()
 
@@ -118,7 +119,7 @@ class PlayerNameRegisterView(MethodView):
             response["name"] = "error"
             cur.close()
             db.commit()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         else:
             if name == "":
                 cur.execute(
@@ -239,4 +240,4 @@ class PlayerNameRegisterView(MethodView):
             current_app.config.get("PURGEURLLIST"),
         )
 
-        return make_response(json.jsonify(response), 202)
+        return make_response(jsonify(response), 202)

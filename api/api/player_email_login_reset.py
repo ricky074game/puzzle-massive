@@ -2,8 +2,9 @@
 
 import uuid
 
-from flask import current_app, redirect, request, make_response, abort, json
+from flask import current_app, redirect, request, make_response, abort, jsonify
 from flask.views import MethodView
+import json
 
 from api.app import db
 from api.database import rowify, fetch_query_string
@@ -29,13 +30,13 @@ class PlayerEmailLoginResetView(MethodView):
                 "message"
             ] = "User currently logged in.  No need to reset the login by e-mail."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         user = user_id_from_ip(request.headers.get("X-Real-IP"))
         if user == None:
             response["message"] = "Shared user not currently logged in."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         args = {}
         if request.form:
@@ -45,7 +46,7 @@ class PlayerEmailLoginResetView(MethodView):
         if len(email) > EMAIL_MAXLENGTH:
             response["message"] = "E-mail is too long."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         cur = db.cursor()
 
@@ -59,7 +60,7 @@ class PlayerEmailLoginResetView(MethodView):
             response["name"] = "error"
             cur.close()
             db.commit()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         else:
             user = result[0]
 
@@ -73,7 +74,7 @@ class PlayerEmailLoginResetView(MethodView):
             response["name"] = "error"
             cur.close()
             db.commit()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         (result, col_names) = rowify(result, cur.description)
         existing_player_data = result[0]
 
@@ -84,7 +85,7 @@ class PlayerEmailLoginResetView(MethodView):
             response["name"] = "error"
             cur.close()
             db.commit()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         # Send a link to reset the login (silent fail if not configured)
         token = uuid.uuid4().hex
@@ -144,4 +145,4 @@ You can ignore this message if you didn't initiate the request.
 
         db.commit()
         cur.close()
-        return make_response(json.jsonify(response), 202)
+        return make_response(jsonify(response), 202)

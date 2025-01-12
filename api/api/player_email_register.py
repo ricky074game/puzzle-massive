@@ -2,9 +2,9 @@
 
 import uuid
 
-from flask import current_app, redirect, request, make_response, abort, json
+from flask import current_app, redirect, request, make_response, abort, jsonify
 from flask.views import MethodView
-
+import json
 from api.app import db
 from api.database import rowify, fetch_query_string
 from api.user import user_id_from_ip, user_not_banned
@@ -30,7 +30,7 @@ class PlayerEmailRegisterView(MethodView):
         if user == None:
             response["message"] = "User not signed in."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         user = int(user)
 
@@ -42,7 +42,7 @@ class PlayerEmailRegisterView(MethodView):
         if len(email) > EMAIL_MAXLENGTH:
             response["message"] = "E-mail is too long."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         cur = db.cursor()
 
@@ -65,7 +65,7 @@ class PlayerEmailRegisterView(MethodView):
             response["name"] = "error"
             cur.close()
             db.commit()
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
         (result, col_names) = rowify(result, cur.description)
         existing_player_data = result[0]
 
@@ -75,7 +75,7 @@ class PlayerEmailRegisterView(MethodView):
                 "message"
             ] = "A player on this same network has already submitted an email address. Changing it is not allowed until the account has been claimed or the verify email token expires."
             response["name"] = "error"
-            return make_response(json.jsonify(response), 400)
+            return make_response(jsonify(response), 400)
 
         if existing_player_data["email"] == email:
             response[
@@ -105,7 +105,7 @@ class PlayerEmailRegisterView(MethodView):
                     response["name"] = "error"
                     cur.close()
                     db.commit()
-                    return make_response(json.jsonify(response), 400)
+                    return make_response(jsonify(response), 400)
 
                 if existing_player_data["is_verifying_email"]:
                     response[
@@ -114,7 +114,7 @@ class PlayerEmailRegisterView(MethodView):
                     response["name"] = "error"
                     cur.close()
                     db.commit()
-                    return make_response(json.jsonify(response), 400)
+                    return make_response(jsonify(response), 400)
 
                 cur.execute(
                     fetch_query_string("update-player-account-email.sql"),
@@ -175,4 +175,4 @@ You can ignore this message if you didn't initiate the request.
 
         db.commit()
         cur.close()
-        return make_response(json.jsonify(response), 202)
+        return make_response(jsonify(response), 202)

@@ -7,9 +7,10 @@ import random
 import time
 import datetime
 
-from flask import current_app, json, redirect, make_response, request, url_for
+from flask import current_app, jsonify, redirect, make_response, request, url_for
 from flask.views import MethodView
 import nanoid
+import json
 
 from api.app import db, redis_connection
 from api.database import rowify, fetch_query_string
@@ -140,7 +141,7 @@ def user_not_banned(f):
                     # movements.
                     response = ". . . please wait . . ."
                     if "application/json" in request.headers.get("Accept"):
-                        response = json.jsonify(
+                        response = jsonify(
                             {
                                 "msg": response,
                                 "expires": banneduser_score,
@@ -267,7 +268,7 @@ class GenerateAnonymousLogin(MethodView):
 
         cur.close()
         data = {"bit": "".join(["", "/puzzle-api/bit/", user_data["login"], p_string])}
-        return make_response(json.jsonify(data), 200)
+        return make_response(jsonify(data), 200)
 
 
 class GenerateAnonymousLoginByToken(MethodView):
@@ -286,7 +287,7 @@ class GenerateAnonymousLoginByToken(MethodView):
         if not token:
             data["message"] = "No token."
             data["name"] = "error"
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         (p_string, password) = generate_password()
 
@@ -301,7 +302,7 @@ class GenerateAnonymousLoginByToken(MethodView):
             data["message"] = "This token is no longer valid"
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         user_data = result[0]
         user = int(user_data["user"])
@@ -316,13 +317,13 @@ class GenerateAnonymousLoginByToken(MethodView):
             data["message"] = "No user found."
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         if not result:
             data["message"] = "No user found."
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         (result, col_names) = rowify(result, cur.description)
         user_data = result[0]
@@ -346,7 +347,7 @@ class GenerateAnonymousLoginByToken(MethodView):
             "message"
         ] = "Login has been reset. Please follow the link shown and save it to login in again."
         data["name"] = "success"
-        return make_response(json.jsonify(data), 200)
+        return make_response(jsonify(data), 200)
 
 
 class UserLoginView(MethodView):
@@ -549,7 +550,7 @@ class UserDetailsView(MethodView):
         cur.close()
 
         # extend the cookie
-        response = make_response(json.jsonify(user_details), 200)
+        response = make_response(jsonify(user_details), 200)
         if extend_cookie:
             # Only set user cookie if it exists
             if current_app.secure_cookie.get("user"):
@@ -584,7 +585,7 @@ class ClaimUserByTokenView(MethodView):
         if not uses_cookies:
             data["message"] = "No cookies."
             data["name"] = "error"
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         # Verify user
         user = current_app.secure_cookie.get("user")
@@ -596,7 +597,7 @@ class ClaimUserByTokenView(MethodView):
             # remove cookies
             data["message"] = "Not logged in."
             data["name"] = "error"
-            response = make_response(json.jsonify(data), 400)
+            response = make_response(jsonify(data), 400)
             expires = datetime.datetime.utcnow() - datetime.timedelta(days=365)
             current_app.secure_cookie.set("user", "", response, expires=expires)
             current_app.secure_cookie.set("shareduser", "", response, expires=expires)
@@ -611,7 +612,7 @@ class ClaimUserByTokenView(MethodView):
         if not token:
             data["message"] = "No token."
             data["name"] = "error"
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         cur = db.cursor()
 
@@ -624,7 +625,7 @@ class ClaimUserByTokenView(MethodView):
             ] = "No player account for this user.  Please use the same web browser that was used when submitting the e-mail address."
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         result = cur.execute(
             fetch_query_string("select-player-details-for-player-id.sql"),
@@ -634,7 +635,7 @@ class ClaimUserByTokenView(MethodView):
             data["message"] = "No player account."
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
         (result, col_names) = rowify(result, cur.description)
         existing_player_data = result[0]
 
@@ -642,18 +643,18 @@ class ClaimUserByTokenView(MethodView):
             data["message"] = "Invalid token for this player."
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         if existing_player_data["is_verifying_email"] == 0:
             data["message"] = "Token for this player is no longer valid."
             data["name"] = "error"
             cur.close()
-            return make_response(json.jsonify(data), 400)
+            return make_response(jsonify(data), 400)
 
         # Token is valid
         data["message"] = "Registered email"
         data["name"] = "success"
-        response = make_response(json.jsonify(data), 202)
+        response = make_response(jsonify(data), 202)
 
         # Update password when shareduser to convert to regular user.
         if is_shareduser:
@@ -708,10 +709,10 @@ class InternalUserDetailsView(MethodView):
                 "msg": "No user found",
             }
             cur.close()
-            return make_response(json.jsonify(err_msg), 404)
+            return make_response(jsonify(err_msg), 404)
         (result, col_names) = rowify(result, cur.description)
         user_details = result[0]
-        return make_response(json.jsonify(user_details), 200)
+        return make_response(jsonify(user_details), 200)
 
 
 class AdminBannedUserList(MethodView):
@@ -731,7 +732,7 @@ class AdminBannedUserList(MethodView):
         for (user, timestamp) in bannedusers:
             banned[user] = {"timestamp": timestamp}
 
-        return json.jsonify(banned)
+        return jsonify(banned)
 
     def post(self):
         "Cleanup banned users"

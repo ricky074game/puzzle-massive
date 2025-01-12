@@ -30,11 +30,12 @@ from docopt import docopt
 import os
 
 import gunicorn.app.base
-from flask import current_app, make_response, request, json, Flask
+from flask import current_app, make_response, request, jsonify, Flask
 from flask.views import MethodView
 from flask_sse import sse
 from rq import Queue
 import requests
+import json
 
 from api.flask_secure_cookie import SecureCookie
 from api.app import redis_connection
@@ -240,7 +241,7 @@ class PuzzlePieceTokenView(MethodView):
                 "type": "puzzlereload",
                 "timeout": 300,
             }
-            response = make_response(json.jsonify(err_msg), 400)
+            response = make_response(jsonify(err_msg), 400)
             expires = datetime.datetime.utcnow() - datetime.timedelta(days=365)
             current_app.secure_cookie.set("user", "", response, expires=expires)
             current_app.secure_cookie.set("shareduser", "", response, expires=expires)
@@ -250,7 +251,7 @@ class PuzzlePieceTokenView(MethodView):
         mark = request.args.get("mark")
         if not isinstance(mark, str) or len(mark) != 10:
             return make_response(
-                json.jsonify(
+                jsonify(
                     {
                         "msg": "invalid args",
                         "type": "invalid",
@@ -278,7 +279,7 @@ class PuzzlePieceTokenView(MethodView):
                     "msg": "puzzle is not ready at this time. Please reload the page.",
                     "type": "puzzleimmutable",
                 }
-                return make_response(json.jsonify(err_msg), r.status_code)
+                return make_response(jsonify(err_msg), r.status_code)
             try:
                 result = r.json()
             except ValueError as err:
@@ -287,13 +288,13 @@ class PuzzlePieceTokenView(MethodView):
                     "msg": "puzzle is not ready at this time. Please reload the page.",
                     "type": "puzzleimmutable",
                 }
-                return make_response(json.jsonify(err_msg), 500)
+                return make_response(jsonify(err_msg), 500)
             if result.get("status") not in (ACTIVE, BUGGY_UNLISTED):
                 err_msg = {
                     "msg": "puzzle is not ready at this time. Please reload the page.",
                     "type": "puzzleimmutable",
                 }
-                return make_response(json.jsonify(err_msg), 400)
+                return make_response(jsonify(err_msg), 400)
             puzzle = result["id"]
 
         puzzle = int(puzzle)
@@ -310,7 +311,7 @@ class PuzzlePieceTokenView(MethodView):
                 "msg": "puzzle pieces can't be moved at this time. Please reload the page.",
                 "type": "puzzleimmutable",
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         if piece in pcfixed:
             # immovable
@@ -320,7 +321,7 @@ class PuzzlePieceTokenView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         # TODO: remove old entries in blockedplayers:{puzzle}
         blockedplayers_for_puzzle_key = "blockedplayers:{puzzle}".format(puzzle=puzzle)
@@ -331,7 +332,7 @@ class PuzzlePieceTokenView(MethodView):
             err_msg = get_blockedplayers_err_msg(
                 blockedplayers_expires, blockedplayers_expires - now
             )
-            return make_response(json.jsonify(err_msg), 429)
+            return make_response(jsonify(err_msg), 429)
 
         token = pack_token(
             nanoid.generate(size=8), puzzle, user, piece, piece_properties
@@ -429,7 +430,7 @@ class PuzzlePieceTokenView(MethodView):
             }
             if snapshot_id:
                 response["snap"] = snapshot_id
-            return make_response(json.jsonify(response), 200)
+            return make_response(jsonify(response), 200)
 
         # Check if user already has a token for this puzzle. This would mean
         # that the user tried moving another piece before the locked piece
@@ -443,7 +444,7 @@ class PuzzlePieceTokenView(MethodView):
             err_msg[
                 "reason"
             ] = "Concurrent piece movements on this puzzle from the same player are not allowed."
-            return make_response(json.jsonify(err_msg), 429)
+            return make_response(jsonify(err_msg), 429)
 
         piece_token_queue_key = get_puzzle_piece_token_queue_key(puzzle, piece)
         with redis_connection.pipeline(transaction=False) as pipe:
@@ -470,7 +471,7 @@ class PuzzlePieceTokenView(MethodView):
                 "expires": now + TOKEN_LOCK_TIMEOUT,
                 "timeout": TOKEN_LOCK_TIMEOUT,
             }
-            return make_response(json.jsonify(err_msg), 409)
+            return make_response(jsonify(err_msg), 409)
 
         # Check if token on piece is still owned by another user
         puzzle_piece_token_key = get_puzzle_piece_token_key(puzzle, piece)
@@ -495,7 +496,7 @@ class PuzzlePieceTokenView(MethodView):
                         "type": "piecelock",
                         "reason": "Piece locked",
                     }
-                    return make_response(json.jsonify(err_msg), 409)
+                    return make_response(jsonify(err_msg), 409)
 
         # This piece is up for grabs since it has been more then 5 seconds since
         # another player has grabbed it.
@@ -526,7 +527,7 @@ class PuzzlePieceTokenView(MethodView):
             response["snap"] = snapshot_id
         # end = time.perf_counter()
         # current_app.logger.debug("PuzzlePieceTokenView {}".format(end - start))
-        return make_response(json.jsonify(response), 200)
+        return make_response(jsonify(response), 200)
 
 
 class PuzzlePiecesMovePublishView(MethodView):
@@ -583,7 +584,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 type="karma",
                 channel="puzzle:{puzzle_id}".format(puzzle_id=puzzle_data["puzzle_id"]),
             )
-            return make_response(json.jsonify(err_msg), 429)
+            return make_response(jsonify(err_msg), 429)
 
         ip = request.headers.get("X-Real-IP")
         validate_token = (
@@ -608,7 +609,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         # check if args are only in acceptable set
         if len(self.ACCEPTABLE_ARGS.intersection(set(args.keys()))) != len(
             list(args.keys())
@@ -619,7 +620,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         # validate that all values are int
         for key, value in list(args.items()):
             if not isinstance(value, int):
@@ -632,7 +633,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                         "expires": now + 5,
                         "timeout": 5,
                     }
-                    return make_response(json.jsonify(err_msg), 400)
+                    return make_response(jsonify(err_msg), 400)
         x = args.get("x")
         y = args.get("y")
         r = args.get("r")
@@ -648,7 +649,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         mark = request.headers.get("Mark")
         if not mark:
@@ -658,7 +659,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         # start = time.perf_counter()
         existing_token = redis_connection.get(f"t:{mark}")
@@ -676,7 +677,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                     "type": "puzzlereload",
                     "timeout": 300,
                 }
-                return make_response(json.jsonify(err_msg), 400)
+                return make_response(jsonify(err_msg), 400)
             user = int(user)
 
         pzq_key = "pzq:{puzzle_id}".format(puzzle_id=puzzle_id)
@@ -699,16 +700,16 @@ class PuzzlePiecesMovePublishView(MethodView):
             )
             if req.status_code >= 400:
                 err_msg = {"msg": "puzzle not available", "type": "missing"}
-                return make_response(json.jsonify(err_msg), req.status_code)
+                return make_response(jsonify(err_msg), req.status_code)
             try:
                 result = req.json()
             except ValueError as err:
                 current_app.logger.error(err)
                 err_msg = {"msg": "puzzle not available", "type": "missing"}
-                return make_response(json.jsonify(err_msg), 500)
+                return make_response(jsonify(err_msg), 500)
             if result.get("status") not in (ACTIVE, BUGGY_UNLISTED):
                 err_msg = {"msg": "puzzle not available", "type": "missing"}
-                return make_response(json.jsonify(err_msg), 404)
+                return make_response(jsonify(err_msg), 404)
             puzzle_data = result
             puzzle_data["puzzle"] = result["id"]
 
@@ -745,18 +746,18 @@ class PuzzlePiecesMovePublishView(MethodView):
                 if token != valid_token:
                     err_msg = increase_ban_time(user, TOKEN_INVALID_BAN_TIME_INCR)
                     err_msg["reason"] = "Token is invalid"
-                    return make_response(json.jsonify(err_msg), 409)
+                    return make_response(jsonify(err_msg), 409)
                 if mark != other_mark:
                     err_msg = increase_ban_time(user, TOKEN_INVALID_BAN_TIME_INCR)
                     err_msg["reason"] = "Player is invalid"
-                    return make_response(json.jsonify(err_msg), 409)
+                    return make_response(jsonify(err_msg), 409)
             else:
                 err_msg = {
                     "msg": "Token has expired",
                     "type": "expiredtoken",
                     "reason": "",
                 }
-                return make_response(json.jsonify(err_msg), 409)
+                return make_response(jsonify(err_msg), 409)
 
         # Expire the token since it shouldn't be used again
         if validate_token:
@@ -773,7 +774,7 @@ class PuzzlePiecesMovePublishView(MethodView):
         ):
             err_msg = bump_count(user)
             if err_msg.get("type") == "bannedusers":
-                return make_response(json.jsonify(err_msg), 429)
+                return make_response(jsonify(err_msg), 429)
 
         # Check if piece will be moved to within boundaries
         if x and (x < 0 or x > puzzle_data["table_width"]):
@@ -783,7 +784,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
         if y and (y < 0 or y > puzzle_data["table_height"]):
             err_msg = {
                 "msg": "Piece movement out of bounds",
@@ -791,7 +792,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         # Check again if piece can be moved and hasn't changed since getting token
         has_y = redis_connection.hget(
@@ -799,7 +800,7 @@ class PuzzlePiecesMovePublishView(MethodView):
         )
         if has_y is None:
             err_msg = {"msg": "piece not available", "type": "missing"}
-            return make_response(json.jsonify(err_msg), 404)
+            return make_response(jsonify(err_msg), 404)
 
         if redis_connection.sismember(f"pcfixed:{puzzle}", piece) == 1:
             # immovable
@@ -809,7 +810,7 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "expires": now + 5,
                 "timeout": 5,
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         (_, _, _, origin_x, origin_y, _) = unpack_token(token)
         redis_connection.publish(
@@ -1064,18 +1065,18 @@ class PuzzlePiecesMovePublishView(MethodView):
                 "timeout": piece_move_timeout,
             }
             return make_response(
-                json.jsonify(err_msg),
+                jsonify(err_msg),
                 503,
             )
 
         # Check msg for error or if piece can't be moved
         if not isinstance(msg, str):
             if isinstance(msg, dict):
-                return make_response(json.jsonify(msg), 400)
+                return make_response(jsonify(msg), 400)
             else:
                 current_app.logger.warning("Unknown error: {}".format(msg))
                 return make_response(
-                    json.jsonify({"msg": msg, "type": "error", "timeout": 3}), 500
+                    jsonify({"msg": msg, "type": "error", "timeout": 3}), 500
                 )
 
         # publish just the bit movement so it matches what this player did
@@ -1137,7 +1138,7 @@ class InternalPuzzlePiecesMovePublishView(MethodView):
             err_msg = {
                 "msg": "No puzzle",
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         puzzle_data["puzzle"] = int(puzzle_data["puzzle"])
         puzzle_data["table_width"] = int(puzzle_data["table_width"])
@@ -1153,7 +1154,7 @@ class InternalPuzzlePiecesMovePublishView(MethodView):
             err_msg = {
                 "msg": "piece can't be moved",
             }
-            return make_response(json.jsonify(err_msg), 400)
+            return make_response(jsonify(err_msg), 400)
 
         pzq_current_key = "pzq_current:{puzzle}".format(puzzle=puzzle)
         pzq_next_key = "pzq_next:{puzzle}".format(puzzle=puzzle)

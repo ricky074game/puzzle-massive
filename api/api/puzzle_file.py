@@ -1,6 +1,6 @@
-from flask import current_app, make_response, request, abort, json
+from flask import current_app, make_response, request, abort, jsonify
 from flask.views import MethodView
-
+import json
 from api.app import db, redis_connection
 from api.database import fetch_query_string, rowify
 
@@ -181,15 +181,15 @@ class InternalPuzzleFileView(MethodView):
                 "msg": "File with that name is not supported",
                 "status_code": 400,
             }
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         data = request.get_json(silent=True)
         if not data:
             err_msg = {"msg": "No JSON data sent", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
         if not {"url", "attribution"}.issuperset(data.keys()):
             err_msg = {"msg": "Extra fields in JSON data were sent", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         if "attribution" in data.keys() and data["attribution"]:
             if file_name in puzzle_file_names_with_no_attribution:
@@ -197,7 +197,7 @@ class InternalPuzzleFileView(MethodView):
                     "msg": "File with that name does not support adding attribution",
                     "status_code": 400,
                 }
-                return make_response(json.jsonify(err_msg), err_msg["status_code"])
+                return make_response(jsonify(err_msg), err_msg["status_code"])
             if (
                 not isinstance(data["attribution"], dict)
                 or {
@@ -214,10 +214,10 @@ class InternalPuzzleFileView(MethodView):
                     "msg": "incompatible attribution value",
                     "status_code": 400,
                 }
-                return make_response(json.jsonify(err_msg), err_msg["status_code"])
+                return make_response(jsonify(err_msg), err_msg["status_code"])
 
         response_msg = add_puzzle_file(puzzle_id, file_name, **data)
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])
 
     def patch(self, puzzle_id, file_name):
         "Update a puzzle file url and attribution."
@@ -227,15 +227,15 @@ class InternalPuzzleFileView(MethodView):
                 "msg": "File with that name is not supported",
                 "status_code": 400,
             }
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         data = request.get_json(silent=True)
         if not data:
             err_msg = {"msg": "No JSON data sent", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
         if not {"url", "attribution"}.issuperset(data.keys()):
             err_msg = {"msg": "Extra fields in JSON data were sent", "status_code": 400}
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         if "attribution" in data.keys():
             if file_name in puzzle_file_names_with_no_attribution:
@@ -243,7 +243,7 @@ class InternalPuzzleFileView(MethodView):
                     "msg": "File with that name does not support adding attribution",
                     "status_code": 400,
                 }
-                return make_response(json.jsonify(err_msg), err_msg["status_code"])
+                return make_response(jsonify(err_msg), err_msg["status_code"])
             if (
                 not isinstance(data["attribution"], dict)
                 or {
@@ -259,10 +259,10 @@ class InternalPuzzleFileView(MethodView):
                     "msg": "incompatible attribution value",
                     "status_code": 400,
                 }
-                return make_response(json.jsonify(err_msg), err_msg["status_code"])
+                return make_response(jsonify(err_msg), err_msg["status_code"])
 
         response_msg = update_puzzle_file(puzzle_id, file_name, **data)
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])
 
     def delete(self, puzzle_id, file_name):
         "Delete a puzzle file from the database."
@@ -272,14 +272,14 @@ class InternalPuzzleFileView(MethodView):
                 "msg": "No JSON payload should be sent with DELETE",
                 "status_code": 400,
             }
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         if file_name not in puzzle_file_names:
             err_msg = {
                 "msg": "File with that name is not supported",
                 "status_code": 400,
             }
-            return make_response(json.jsonify(err_msg), err_msg["status_code"])
+            return make_response(jsonify(err_msg), err_msg["status_code"])
 
         response_msg = delete_puzzle_file(puzzle_id, file_name)
-        return make_response(json.jsonify(response_msg), response_msg["status_code"])
+        return make_response(jsonify(response_msg), response_msg["status_code"])

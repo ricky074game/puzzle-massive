@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from builtins import zip
-from flask import abort, json, make_response
+from flask import abort, jsonify, make_response
 from flask.views import MethodView
-
+import json
 from .app import db, redis_connection
 from .database import fetch_query_string, rowify
 from .user import user_not_banned
@@ -53,4 +53,4 @@ class PuzzlePieceView(MethodView):
 
         pieceData["s"] = piece_status
         pieceData["id"] = piece
-        return make_response(json.jsonify(pieceData), 200)
+        return make_response(jsonify(pieceData), 200)

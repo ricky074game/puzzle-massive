@@ -1,6 +1,7 @@
-from flask import current_app, request, abort, json, make_response
+from flask import current_app, request, abort, jsonify, make_response
 from flask.views import MethodView
 import time
+import json
 
 from api.app import db, redis_connection
 from api.user import user_id_from_ip, user_not_banned
@@ -160,7 +161,7 @@ class PuzzleActiveCountView(MethodView):
         player_active_count = {"now": now, "count": count}
 
         cur.close()
-        return make_response(json.jsonify(player_active_count), 200)
+        return make_response(jsonify(player_active_count), 200)
 
 
 class PlayerStatsView(MethodView):
@@ -172,5 +173,5 @@ class PlayerStatsView(MethodView):
         since = now - ACTIVE_PLAYER_RANGE
         total_active_player_count = redis_connection.zcount("timeline", since, "+inf")
         return make_response(
-            json.jsonify({"totalActivePlayers": total_active_player_count}), 200
+            jsonify({"totalActivePlayers": total_active_player_count}), 200
         )
