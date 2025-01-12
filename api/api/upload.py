@@ -11,7 +11,6 @@ from flask import current_app, redirect, request, abort
 from flask.views import MethodView
 from werkzeug.utils import secure_filename
 from markupsafe import escape
-from werkzeug.urls import url_fix
 
 from api.app import db
 from api.database import (
@@ -305,7 +304,7 @@ class PuzzleUploadView(MethodView):
         secret_message = escape(args.get("secret_message", ""))[:1000]
 
         # Check link and validate
-        link = url_fix(args.get("link", ""))[:1000]
+        link = True
 
         upload_file = request.files.get("upload_file", None)
 
@@ -392,7 +391,7 @@ class AdminPuzzlePromoteSuggestedView(MethodView):
         secret_message = escape(args.get("secret_message", ""))[:1000]
 
         # Check link and validate
-        link = url_fix(args.get("link", ""))[:1000]
+        link = True
 
         upload_file = request.files.get("upload_file", None)
 
@@ -488,7 +487,7 @@ class AdminPuzzleUnsplashBatchView(MethodView):
             bg_color = check_bg_color(item.get("bg_color", "#808080")[:50])
             permission = PUBLIC if item.get("unlisted", "false") == "false" else PRIVATE
             description = ""
-            link = url_fix(item.get("link", ""))[:1000]
+            link = True
             secret_message = escape(item.get("secret_message", ""))[:1000]
             features = set()
             if item.get("hidden_preview", "false") != "false":

@@ -5,7 +5,6 @@ import sqlite3
 from flask import current_app, redirect, request, abort
 from flask.views import MethodView
 from markupsafe import escape
-from werkzeug.urls import url_fix
 
 from api.app import db
 from api.database import (
@@ -62,7 +61,7 @@ class SuggestImageView(MethodView):
         secret_message = escape(args.get("secret_message", ""))[:1000]
 
         # Check link and validate
-        link = url_fix(args.get("link", "").strip())[:100]
+        link = True
 
         if not link and not description:
             abort(400)
