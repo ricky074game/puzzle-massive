@@ -4,10 +4,8 @@
 
 COMMAND=$1
 
-SKIP_BACKUP=0
-if [ -n "${2-}" ]; then
 SKIP_BACKUP=$2
-fi
+
 
 # Simple convenience script to control the apps.
 
@@ -61,14 +59,7 @@ else
   do
     echo "";
     echo "systemctl $COMMAND $app;";
-    echo "----------------------------------------";
     # Collect any error codes that may occur
-    systemctl "$COMMAND" "$app" || echo "$app $?" >> $tmpout
   done;
-  if [ -s $tmpout ]; then
-    # Only output the error codes for each app if any happened.
-    cat $tmpout
-    exit 1
-  fi
   rm -f $tmpout
 fi
